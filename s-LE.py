@@ -11,20 +11,27 @@ from scipy.spatial import distance
 
 
 
-datapoints = pd.DataFrame(np.concatenate((np.random.randint(-1000,1000,size=(10,4)),
+datapoints = pd.DataFrame(np.concatenate((np.random.rand(10,4),
                                           np.random.randint(0,2, size=(10,1))), axis=1),
                                           columns=['a', 'b', 'c', 'd','label'])
 
-
-print(np.array([1,2])+ np.array([2,3]))
 
 
 def Gauss_Kern(Seq:np.array, Seq_2:np.array) -> (list, list):
 
     
-    K = (np.linalg.norm(Seq)**2) + (np.linalg.norm(Seq_2)**2) - (2*np.inner(Seq, Seq_2))
-    K = K / np.sum(distance.euclidean(Seq, Seq_2))/2*len(Seq)
     
+    K = ((np.linalg.norm(Seq)**2) + (np.linalg.norm(Seq_2)**2) - (2*np.inner(Seq, Seq_2)))
+
+    K = K / (np.mean(distance.euclidean(Seq, Seq_2)))
+
+    
+    
+#    K = K / np.mean(np.dot((Seq - Seq_2).T, (Seq-Seq_2))**(1/2))
+
+    K = np.exp(-K)
+
+    K = K / (1.0 + K.sum())
     return K
 
 #test = Gauss_Kern(datapoints.loc[0][:-1], datapoints.loc[1][:-1])
@@ -101,6 +108,12 @@ def Adap_Neigh(dataset:pd.DataFrame) -> np.array:
 def Matrc_Affnty(dataset:pd.DataFrame) -> np.array:
     
     
+    '''
+        
+        Set of the weights
+    
+    '''
+    
     dataset = np.array(dataset)
     Nw = np.array(Adap_Neigh(datapoints)[0])
     Nb = np.array(Adap_Neigh(datapoints)[1])
@@ -112,27 +125,52 @@ def Matrc_Affnty(dataset:pd.DataFrame) -> np.array:
         
         for j in range(len(dataset[0])):
             
-            if (any(x in dataset[j] for x in Nw[i])):
+            if (any(x in dataset[j] for x in Nw[i])) and i != j:
                 
                 
                 Ww[i][j] = Gauss_Kern(dataset[i][:-1], dataset[j][:-1])
+            
+            
 
-            if (any(x in dataset[j] for x in Nb[i])):
+            if (any(x in dataset[j] for x in Nb[i])) and i != j:
+                
                 
                 Wb[i][j] = 1
+                
     
-    return Ww+Wb
+    for i in range(len())
+    
+    
+    return Ww, Wb
+
+
+
+
+#def
+
+
+
+
+
 
 
 
 
 data_test = np.array(datapoints)
-
-
 Nw = Adap_Neigh(datapoints)[0]
 Nb = Adap_Neigh(datapoints)[1]
 
-test_2 = Matrc_Affnty(datapoints)
+Ww = Matrc_Affnty(datapoints)[0]
+Wb = Matrc_Affnty(datapoints)[1]
+
+
+
+
+
+
+Lw = np.identity(5, dtype=float)-Ww
+Lb = np.identity(5, dtype=float)-Wb
+
 
 
 
