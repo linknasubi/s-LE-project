@@ -9,12 +9,10 @@ from scipy.spatial import distance
 
 
 
-datapoints = pd.DataFrame(np.array([[41,25,463,225,56,97,411,100,6,77],
-                           [0.14, 0.36, 0.99, 0.53, 0.75, 0.97, 0.43, 0.07, 0.37, 0.89],
-                           [1,1,1,0,0,0,1,1,0,1]]).T, columns=['a', 'b', 'label'])
+
 
 datapoints = pd.DataFrame(np.concatenate((np.random.randint(-1000,1000,size=(10,4)),
-                                          np.array([1,1,1,0,0,0,1,1,0,1])[np.newaxis].transpose()), axis=1),
+                                          np.random.randint(0,2, size=(10,1))), axis=1),
                                           columns=['a', 'b', 'c', 'd','label'])
 
 
@@ -33,6 +31,8 @@ def Gauss_Kern(Seq:np.array, Seq_2:np.array) -> (list, list):
 
 def Adap_Neigh(dataset:pd.DataFrame) -> np.array:
     AS_Avr = []
+    Nw_aux = []
+    Nb_aux = []
     Nw = []
     Nb = []
     
@@ -56,6 +56,13 @@ def Adap_Neigh(dataset:pd.DataFrame) -> np.array:
         AS_Avr.append(np.mean(pairwise_dists))
     
     
+    '''
+        
+        Comparison of Similarity
+    
+    '''    
+    
+    
     for i in range(len(dataset['label'])):
         
         for j in range(len(dataset['label'])):
@@ -73,11 +80,18 @@ def Adap_Neigh(dataset:pd.DataFrame) -> np.array:
                 
                 if dataset.loc[i]['label'] == dataset.loc[j]['label'] and pairwise_dists > AS_Avr[i]:
                     
-                    Nw.append(dataset.loc[j])
+                    Nw_aux.append(np.array(dataset.loc[j]))
                 
-                elif dataset.loc[i]['label'] != dataset.loc[j]['label'] and pairwise_dists > AS_Avr[i]:
+                if dataset.loc[i]['label'] != dataset.loc[j]['label'] and pairwise_dists > AS_Avr[i]:
                     
-                    Nb.append(dataset.loc[j])
+                    Nb_aux.append(np.array(dataset.loc[j]))
+        
+        Nw.append(Nw_aux)
+        Nb.append(Nb_aux)
+        Nb_aux = []
+        Nw_aux = []
+        
+                
             
     
     return Nw, Nb
@@ -86,31 +100,45 @@ def Adap_Neigh(dataset:pd.DataFrame) -> np.array:
 
 def Matrc_Affnty(dataset:pd.DataFrame) -> np.array:
     
+    
+    dataset = np.array(dataset)
     Nw = np.array(Adap_Neigh(datapoints)[0])
     Nb = np.array(Adap_Neigh(datapoints)[1])
     
-    Ww = np.zeros((len(dataset), len(dataset['label'])))
-    Wb = np.zeros((len(dataset), len(dataset['label'])))
+    Ww = np.zeros((len(dataset[0]), len(dataset[0])))
+    Wb = np.zeros((len(dataset[0]), len(dataset[0])))
     
-    for i in range(len(dataset['label'])):
+    for i in range(len(dataset[0])):
         
-        for j in range(len(dataset['label'])):
+        for j in range(len(dataset[0])):
             
-            if dataset.loc[j] in Nw:
+            if (any(x in dataset[j] for x in Nw[i])):
                 
-                Ww[i][j] = Gauss_Kern(datapoints.loc[i][:-1], datapoints.loc[j][:-1])
+                
+                Ww[i][j] = Gauss_Kern(dataset[i][:-1], dataset[j][:-1])
 
-            if set():
+            if (any(x in dataset[j] for x in Nb[i])):
                 
                 Wb[i][j] = 1
     
     return Ww+Wb
 
 
+
+
+data_test = np.array(datapoints)
+
+
 Nw = Adap_Neigh(datapoints)[0]
 Nb = Adap_Neigh(datapoints)[1]
 
-#test_2 = Matrc_Affnty(datapoints)
+test_2 = Matrc_Affnty(datapoints)
+
+
+
+
+
+
 
 #import networkx as nx
 #
